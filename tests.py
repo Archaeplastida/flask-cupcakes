@@ -4,7 +4,7 @@ from app import app
 from models import db, Cupcake
 
 # Use test database and don't clutter tests with SQL
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///cupcakes_test'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///cupcakes_test_db'
 app.config['SQLALCHEMY_ECHO'] = False
 
 # Make Flask errors be real errors, rather than HTML pages with error info
@@ -26,6 +26,12 @@ CUPCAKE_DATA_2 = {
     "size": "TestSize2",
     "rating": 10,
     "image": "http://test.com/cupcake2.jpg"
+}
+
+CUPCAKE_DATA_3 = {
+    "flavor": "TestFlavor3",
+    "size": "TestSize3",
+    "rating": 7.5
 }
 
 
@@ -107,3 +113,26 @@ class CupcakeViewsTestCase(TestCase):
             })
 
             self.assertEqual(Cupcake.query.count(), 2)
+
+    def test_edit_cupcake(self):
+        with app.test_client() as client:
+            url = f"/api/cupcakes/{self.cupcake.id}"
+            resp = client.patch(url, json=CUPCAKE_DATA_3)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual({
+                "cupcake": {
+                    "flavor": "TestFlavor3",
+                    "id": self.cupcake.id,
+                    "image": "http://test.com/cupcake.jpg",
+                    "rating": 7.5,
+                    "size": "TestSize3"
+                }
+            }, resp.json)
+
+    def test_delete_cupcake(self):
+        with app.test_client() as client:
+            url = f"/api/cupcakes/{self.cupcake.id}"
+            resp = client.delete(url)
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual({"message":"deleted"}, resp.json)
